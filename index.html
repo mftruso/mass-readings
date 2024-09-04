@@ -1,0 +1,111 @@
+<html>
+
+<head>
+    <title>Mass Readings</title>
+    <!-- https://github.com/openbibleinfo/Bible-Passage-Reference-Parser -->
+    <script src="js/en_bcv_parser.min.js" charset="UTF-8"></script>
+    <!-- https://github.com/openbibleinfo/Bible-Reference-Formatter -->
+    <script src="js/en.js" charset="UTF-8"></script>
+    <script>
+        var bcv = new bcv_parser;
+        bcv.include_apocrypha(true);
+
+        function processData(data, sources) {
+            // Loop through each object in the collection and collect the "source" value
+            console.log(data)
+            const day = { date: data.number, readings: [] }
+
+            Object.entries(data).forEach(([k, v]) => {
+                if (v.source && k != 'Mass_GA') { // no alleluia 
+                    let source = v.source
+                    // TODO
+                    // if (k === 'Mass_Ps') {
+                    //     // remove alternate psalm reference
+                    //     source = source.replace(/\(.*?\)/, '');
+                    // }
+                    source = source.replaceAll('&#x2010;', '-')
+                    day.readings.push(
+                        osisToEn("niv-shortest",  // convert OSIS book to short code 
+                            bcv.parse(source).osis() // parse full book name to OSIS format
+                        )
+                    );
+                }
+            });
+
+            sources.push(day)
+        }
+
+        // Function to make the JSONP request
+        function fetchJSONPData(url, sources, callbackName) {
+            return new Promise((resolve) => {
+                // Define the callback function dynamically for each request
+                window.universalisCallback = function (data) {
+                    processData(data, sources);
+                    resolve();
+                };
+
+                // Create a script element
+                const script = document.createElement('script');
+
+                // Append the callback function name to the URL
+                script.src = `${url}?universalisCallback=${callbackName}`;
+
+                // Add the script to the document head to execute it
+                document.head.appendChild(script);
+            });
+        }
+
+        // Function to get the date string in YYYYMMDD format
+        function getDateString(date) {
+            const year = date.getFullYear();
+            const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+            const day = String(date.getUTCDate()).padStart(2, '0');
+            return `${year}${month}${day}`;
+        }
+
+        // Function to fetch data for a week's worth of dates
+        async function fetchDataForWeek() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const startDate = new Date(urlParams.get('startDate')) || new Date()
+            // startDate.setHours(0,0,0,0);
+
+            const sources = [];
+
+            for (let i = 0; i < 7; i++) {
+                // Calculate the current date in the loop
+                const currentDate = new Date(startDate);
+                currentDate.setUTCHours(0, 0, 0, 0)
+                console.log(currentDate)
+                currentDate.setDate(startDate.getDate() + i);
+
+                // Get the date string in the required format
+                const dateString = getDateString(currentDate);
+
+                // Replace with your endpoint URL and append the date string as a path parameter
+                const endpointUrl = `https://www.universalis.com/usa/${dateString}/jsonpmass.js`;
+
+                // Define a unique callback name for each request
+                const callbackName = `universalisCallback_${dateString}`;
+
+                // Fetch data for the current date and collect sources
+                await fetchJSONPData(endpointUrl, sources, callbackName);
+            }
+
+            // Log the collected "source" values
+            console.log(sources);
+            sources.forEach(day => {
+                document.getElementById("wrapper").innerHTML += `<div><div class="date">${day.date}</div><div>${day.readings.join('; ')}</div></div>`
+            })
+        }
+
+        fetchDataForWeek();
+    </script>
+</head>
+
+<body>
+    <div id="wrapper">
+
+    </div>
+</body>
+
+</html>
