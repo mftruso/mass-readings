@@ -63,6 +63,19 @@
             return `${year}${month}${day}`;
         }
 
+        function convertToDate(yyyymmdd) {
+            // Convert the number to a string for easier manipulation
+            let dateStr = yyyymmdd.toString();
+
+            // Extract year, month, and day from the string
+            let year = parseInt(dateStr.substring(0, 4), 10);
+            let month = parseInt(dateStr.substring(4, 6), 10) - 1; // Months are 0-based in JavaScript
+            let day = parseInt(dateStr.substring(6, 8), 10);
+
+            // Create and return the Date object
+            return new Date(year, month, day);
+        }
+
         // Function to fetch data for a week's worth of dates
         async function fetchDataForWeek() {
             const urlParams = new URLSearchParams(window.location.search);
@@ -94,18 +107,26 @@
             // Log the collected "source" values
             console.log(sources);
             sources.forEach(day => {
-                document.getElementById("wrapper").innerHTML += `<div><div class="date">${day.date}</div><div>${day.readings.join('; ')}</div></div>`
+                const date = convertToDate(day.date)
+                const dayOfWeek = new Intl.DateTimeFormat("en-US", {weekday: "long"}).format(date)
+                document.getElementById("wrapper").innerHTML += `<div><div class="date">${dayOfWeek}</div><div>${day.readings.join('; ')}</div></div>`
             })
         }
 
         fetchDataForWeek();
     </script>
+    <style>
+        .hint {
+            margin-top: 200px
+        }
+    </style>
 </head>
 
 <body>
     <div id="wrapper">
 
     </div>
+    <div class="hint">Hint: add <code>?startDate=YYYY-MM-DD</code> to the URL</div>
 </body>
 
 </html>
