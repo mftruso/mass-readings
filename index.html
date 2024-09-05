@@ -108,7 +108,7 @@
             sources.forEach(day => {
                 const date = convertToDate(day.date)
                 const dayOfWeek = new Intl.DateTimeFormat("en-US", {weekday: "long"}).format(date)
-                document.getElementById("wrapper").innerHTML += `<div><div class="date">${dayOfWeek}</div><div>${day.readings.join('; ')}</div></div>`
+                document.getElementById("wrapper").innerHTML += `<div><div class="date">${dayOfWeek}: ${day.readings.join('; ')}</div></div>`
             })
         }
 
