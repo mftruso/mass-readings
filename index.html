@@ -18,11 +18,10 @@
             Object.entries(data).forEach(([k, v]) => {
                 if (v.source && k != 'Mass_GA') { // no alleluia 
                     let source = v.source
-                    // TODO
-                    // if (k === 'Mass_Ps') {
-                    //     // remove alternate psalm reference
-                    //     source = source.replace(/\(.*?\)/, '');
-                    // }
+                    if (k === 'Mass_Ps') {
+                        // remove alternate psalm reference
+                        source = source.replace(/(\d+)\((\d+)\)/, '$2');
+                    }
                     source = source.replaceAll('&#x2010;', '-')
                     day.readings.push(
                         osisToEn("niv-shortest",  // convert OSIS book to short code 
